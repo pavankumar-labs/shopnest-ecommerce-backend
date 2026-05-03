@@ -1,4 +1,4 @@
-package com.pavankumar.shopnestecommercebackend;
+package com.pavankumar.shopnestecommercebackend.model;
 public enum Role{
     ROLE_USER,
     ROLE_ADMIN,

@@ -1,4 +1,4 @@
-package com.pavankumar.shopnestecommercebackend;
+package com.pavankumar.shopnestecommercebackend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

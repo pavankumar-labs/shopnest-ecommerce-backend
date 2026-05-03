@@ -1,0 +1,27 @@
+package com.pavankumar.shopnestecommercebackend.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+
+public class RegisterRequest {
+
+    @NotBlank(message = "Name is required")
+    @Size(max=50,message = "name must under 50 characters")
+    private String name;
+
+    @Size(min = 8,message = "Password must be 8+ characters")
+    @NotBlank(message = "Password is required")
+    private String password;
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
+    private String email;
+}
