@@ -1,4 +1,4 @@
-package com.pavankumar.shopnestecommercebackend.Controller;
+package com.pavankumar.shopnestecommercebackend.controller;
 
 import com.pavankumar.shopnestecommercebackend.dto.AuthResponse;
 import com.pavankumar.shopnestecommercebackend.dto.LoginRequest;

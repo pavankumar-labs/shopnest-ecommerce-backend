@@ -21,21 +21,13 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService  {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    @Override
-    public UserDetails loadUserByUsername(String email){
-        User user=userRepository.findByEmail(email).orElseThrow(()->new UsernameNotFoundException("User not found"+email));
-        return org.springframework.security.core.userdetails.
-                User.withUsername(user.getEmail())
-                .password(user.getPassword())
-                .authorities(user.getRole().name())
-                .build();
-    }
+
 
     public AuthResponse register(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
@@ -61,7 +53,7 @@ public class UserService implements UserDetailsService {
         String token= jwtUtil.generateToken(userDetails);
         return AuthResponse.builder()
                 .token(token)
-                .role(userDetails.getAuthorities().toString())
+                .role(jwtUtil.extractRoleFromUserDetails(userDetails))
                 .message("login successful")
                 .build();
     }

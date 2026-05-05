@@ -25,11 +25,16 @@ public class JwtUtil {
     private Key getSigningKey(){
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
+    public String extractRoleFromUserDetails(UserDetails user){
+        return user.getAuthorities().stream().findFirst().
+                map(a->a.getAuthority()).
+                orElse("ROLE_USER");
+    }
 
     public String generateToken(UserDetails user){
         return Jwts.builder()
                 .setSubject(user.getUsername())
-                .claim("role", user.getAuthorities())
+                .claim("role",extractRoleFromUserDetails(user))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis()+expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
