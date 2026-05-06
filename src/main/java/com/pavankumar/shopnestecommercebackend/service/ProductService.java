@@ -124,7 +124,7 @@ public class ProductService {
                 .lastPage(productPage.isLast())
                 .totalElements(productPage.getTotalElements())
                 .totalPages(productPage.getTotalPages())
-                .page(productPage.getSize())
+                .page(productPage.getNumber())
                 .build();
     }
 
