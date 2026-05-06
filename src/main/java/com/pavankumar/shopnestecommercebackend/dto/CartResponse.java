@@ -14,8 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CartResponse {
-    private long id;
-    private List<CartItem> cartItems;
+    private Long id;
+    private List<CartItemResponse> cartItems;
     private BigDecimal totalAmount;
     private Integer totalItems;
 }

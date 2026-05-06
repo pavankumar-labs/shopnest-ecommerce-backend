@@ -1,0 +1,120 @@
+package com.pavankumar.shopnestecommercebackend.service;
+
+import com.pavankumar.shopnestecommercebackend.dto.OrderItemResponse;
+import com.pavankumar.shopnestecommercebackend.dto.OrderResponse;
+import com.pavankumar.shopnestecommercebackend.dto.PlaceOrderRequest;
+import com.pavankumar.shopnestecommercebackend.model.*;
+import com.pavankumar.shopnestecommercebackend.repository.CartRepository;
+import com.pavankumar.shopnestecommercebackend.repository.OrderRepository;
+import com.pavankumar.shopnestecommercebackend.repository.ProductRepository;
+import com.pavankumar.shopnestecommercebackend.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class OrderService {
+    private final UserRepository userRepository;
+    private final CartRepository cartRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+
+    @Transactional
+    public OrderResponse placeOrder(PlaceOrderRequest request){
+        User user=getCurrentUser();
+        Cart cart=cartRepository.findByUserId(user.getId())
+                .orElseThrow(()->new RuntimeException("Cart not found"));
+        BigDecimal totalAmount=BigDecimal.ZERO;
+        List<OrderItem> orderItems=new ArrayList<>();
+        for(CartItem cartItem : cart.getItems()){
+            Product product=cartItem.getProduct();
+            if(product.getStock()<cartItem.getQuantity()){
+                throw new RuntimeException("Stock is Unavailable: "+product.getName());
+            }
+            OrderItem orderItem=OrderItem.builder()
+                    .product(product)
+                    .quantity(cartItem.getQuantity())
+                    .priceAtPurchase((product.getPrice()))
+                    .build();
+            BigDecimal subTotal=product.getPrice()
+                    .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+            totalAmount=totalAmount.add(subTotal);
+            product.setStock((product.getStock())-cartItem.getQuantity());
+            productRepository.save(product);
+            orderItems.add(orderItem);
+        }
+        Order order=Order.builder()
+                .user(user)
+                .items(orderItems)
+                .shippingAddress(request.getShippingAddress())
+                .totalAmount(totalAmount)
+                .status(OrderStatus.PENDING)
+                .build();
+        orderItems.forEach(orderItem -> orderItem.setOrder(order));
+        cart.getItems().clear();
+        cartRepository.save(cart);
+        Order savedOrder=orderRepository.save(order);
+        return mapToOrderResponse(order);
+    }
+    public List<OrderResponse> getMyOrders(){
+        User user=getCurrentUser();
+        List<Order> orders=orderRepository.findByUserId(user.getId());
+       return orders.stream()
+               .map(order -> mapToOrderResponse(order))
+               .collect(Collectors.toList());
+    }
+    public OrderResponse getOrderById(Long orderId){
+        User user=getCurrentUser();
+        Order order=orderRepository.findByIdAndUserId(orderId,user.getId())
+                .orElseThrow(()->new RuntimeException("Order Not Found"));
+        return mapToOrderResponse(order);
+    }
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId){
+        User user=getCurrentUser();
+        Order order=orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(()->new RuntimeException("Order Not Found"));
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Only PENDING orders can be cancelled");
+        }
+        for(OrderItem orderItem: order.getItems()){
+            Product product=orderItem.getProduct();
+            product.setStock(product.getStock()+ orderItem.getQuantity());
+            productRepository.save(product);
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        return mapToOrderResponse(orderRepository.save(order));
+    }
+    public OrderResponse mapToOrderResponse(Order order){
+         List<OrderItemResponse> itemResponseList=order.getItems()
+                 .stream().map(orderItem->OrderItemResponse.builder()
+                         .productId(orderItem.getProduct().getId())
+                         .productName(orderItem.getProduct().getName())
+                         .quantity(orderItem.getQuantity())
+                         .priceAtPurchase(orderItem.getPriceAtPurchase())
+                         .subTotal(orderItem.getPriceAtPurchase()
+                                 .multiply(BigDecimal.valueOf(orderItem.getQuantity())))
+                         .build()).collect(Collectors.toList());
+         return OrderResponse.builder()
+                 .status(order.getStatus().name())
+                 .items(itemResponseList)
+                 .shippingAddress(order.getShippingAddress())
+                 .totalAmount(order.getTotalAmount())
+                 .id(order.getId())
+                 .createdAt(order.getCreatedAt())
+                 .build();
+    }
+    public User getCurrentUser(){
+        String email= SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(()->new RuntimeException("User not found"));
+    }
+}

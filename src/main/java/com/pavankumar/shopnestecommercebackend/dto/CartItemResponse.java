@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class CartItemResponse {
-    private Long Id;
+    private Long id;
     private Long productId;
     private String productName;
     private BigDecimal productPrice;

@@ -29,13 +29,13 @@ public class Order {
     private User user;
 
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<OrderItem> orderItems=new ArrayList<>();
+    private List<OrderItem> items=new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
 
-    @Column(name="total_name",nullable = false,precision = 10,scale = 2)
+    @Column(name="total_amount",nullable = false,precision = 10,scale = 2)
     private BigDecimal totalAmount;
 
     @Column(name="shipping_address",nullable = false)

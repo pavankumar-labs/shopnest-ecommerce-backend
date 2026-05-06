@@ -21,7 +21,7 @@ public class OrderResponse {
     private Long id;
     private String status;
     private BigDecimal totalAmount;
-    private String shoppingAddress;
-    private List<OrderItemResponse> list;
+    private String shippingAddress;
+    private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }
