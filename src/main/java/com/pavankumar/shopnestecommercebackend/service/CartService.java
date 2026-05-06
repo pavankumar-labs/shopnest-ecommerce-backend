@@ -51,6 +51,7 @@ public class CartService {
             CartItem  cartItem=item.get();
             cartItem.setQuantity(cartItem.getQuantity()+request.getQuantity());
             cartItemRepository.save(cartItem);
+            cart.getItems().add(cartItem);
         }
         else {
             CartItem cartItem=CartItem.builder()
@@ -60,8 +61,7 @@ public class CartService {
                     .build();
             cartItemRepository.save(cartItem);
         }
-        Cart savedCart=cartRepository.save(cart);
-       return mapToResponse(savedCart);
+       return mapToResponse(cartRepository.findById(cart.getId()).get());
     }
 
     public CartResponse removefromCart(Long cartItemId){
@@ -81,11 +81,12 @@ public class CartService {
         Cart cart=cartRepository.findByUserId(user.getId())
                 .orElseThrow(()->new RuntimeException("Cart Not found"));
         cart.getItems().clear();
+        cartRepository.save(cart);
         return mapToResponse(cart);
     }
 
 
-    public Cart createCart(User user){
+    private Cart createCart(User user){
           Cart cart= Cart.builder()
                   .user(user)
                   .items(new ArrayList<>())

@@ -31,6 +31,9 @@ public class OrderService {
         User user=getCurrentUser();
         Cart cart=cartRepository.findByUserId(user.getId())
                 .orElseThrow(()->new RuntimeException("Cart not found"));
+        if (cart.getItems().isEmpty()) {
+            throw new RuntimeException("Cannot place order with empty cart");
+        }
         BigDecimal totalAmount=BigDecimal.ZERO;
         List<OrderItem> orderItems=new ArrayList<>();
         for(CartItem cartItem : cart.getItems()){
@@ -61,13 +64,13 @@ public class OrderService {
         cart.getItems().clear();
         cartRepository.save(cart);
         Order savedOrder=orderRepository.save(order);
-        return mapToOrderResponse(order);
+        return mapToOrderResponse(savedOrder);
     }
     public List<OrderResponse> getMyOrders(){
         User user=getCurrentUser();
         List<Order> orders=orderRepository.findByUserId(user.getId());
        return orders.stream()
-               .map(order -> mapToOrderResponse(order))
+               .map(this:: mapToOrderResponse)
                .collect(Collectors.toList());
     }
     public OrderResponse getOrderById(Long orderId){
@@ -92,7 +95,7 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         return mapToOrderResponse(orderRepository.save(order));
     }
-    public OrderResponse mapToOrderResponse(Order order){
+    private OrderResponse mapToOrderResponse(Order order){
          List<OrderItemResponse> itemResponseList=order.getItems()
                  .stream().map(orderItem->OrderItemResponse.builder()
                          .productId(orderItem.getProduct().getId())
@@ -111,7 +114,7 @@ public class OrderService {
                  .createdAt(order.getCreatedAt())
                  .build();
     }
-    public User getCurrentUser(){
+    private User getCurrentUser(){
         String email= SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         return userRepository.findByEmail(email)
