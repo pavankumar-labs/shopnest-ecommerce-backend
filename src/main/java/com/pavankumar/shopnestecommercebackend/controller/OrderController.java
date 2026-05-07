@@ -31,8 +31,8 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
-    @DeleteMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long orderId){
-        return ResponseEntity.ok(orderService.cancelOrder(orderId));
+ @PutMapping("/{id}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.cancelOrder(id));
     }
 }

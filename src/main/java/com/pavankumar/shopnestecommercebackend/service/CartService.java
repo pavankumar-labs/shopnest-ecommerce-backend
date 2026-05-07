@@ -51,7 +51,6 @@ public class CartService {
             CartItem  cartItem=item.get();
             cartItem.setQuantity(cartItem.getQuantity()+request.getQuantity());
             cartItemRepository.save(cartItem);
-            cart.getItems().add(cartItem);
         }
         else {
             CartItem cartItem=CartItem.builder()
