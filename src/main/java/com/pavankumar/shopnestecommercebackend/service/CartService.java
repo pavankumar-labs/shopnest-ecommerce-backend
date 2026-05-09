@@ -1,8 +1,12 @@
 package com.pavankumar.shopnestecommercebackend.service;
 
+import com.pavankumar.shopnestecommercebackend.util.AuthUtil;
 import com.pavankumar.shopnestecommercebackend.dto.AddToCartRequest;
 import com.pavankumar.shopnestecommercebackend.dto.CartItemResponse;
 import com.pavankumar.shopnestecommercebackend.dto.CartResponse;
+import com.pavankumar.shopnestecommercebackend.exception.BadRequestException;
+import com.pavankumar.shopnestecommercebackend.exception.ResourceNotFoundException;
+import com.pavankumar.shopnestecommercebackend.exception.UnauthorisedException;
 import com.pavankumar.shopnestecommercebackend.model.Cart;
 import com.pavankumar.shopnestecommercebackend.model.CartItem;
 import com.pavankumar.shopnestecommercebackend.model.Product;
@@ -12,9 +16,7 @@ import com.pavankumar.shopnestecommercebackend.repository.CartRepository;
 import com.pavankumar.shopnestecommercebackend.repository.ProductRepository;
 import com.pavankumar.shopnestecommercebackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,20 +30,23 @@ public class CartService {
     private final CartRepository cartRepository;
     private  final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
+    private final AuthUtil util;
 
     public CartResponse getCart(){
-        User user=getCurrentUser();
+        User user=util.getCurrentUser();
         Cart cart=cartRepository.findByUserId(user.getId())
                 .orElseGet(()->createCart(user));
         return mapToResponse(cart);
     }
 
     public CartResponse addToCart(AddToCartRequest request){
-        User user=getCurrentUser();
+        User user=util.getCurrentUser();
         Product product=productRepository.findById(request.getProductId())
-                .orElseThrow(()-> new RuntimeException("Product Not Found"));
+                .orElseThrow(()-> new ResourceNotFoundException
+                        ("Product not found: "+request.getProductId()));
         if(product.getStock()< request.getQuantity()){
-            throw new RuntimeException("Insufficient stock. Available: " + product.getStock());
+            throw new BadRequestException
+                    ("Insufficient stock. available: " + product.getStock());
         }
         Cart cart=cartRepository.findByUserId(user.getId())
                 .orElseGet(()->createCart(user));
@@ -49,7 +54,11 @@ public class CartService {
                 .findByCartIdAndProductId(cart.getId(),product.getId());
         if(item.isPresent()){
             CartItem  cartItem=item.get();
-            cartItem.setQuantity(cartItem.getQuantity()+request.getQuantity());
+            int newQuantity=cartItem.getQuantity()+request.getQuantity();
+            if(product.getStock()<newQuantity){
+                throw new BadRequestException("Insufficient stock");
+            }
+            cartItem.setQuantity(newQuantity);
             cartItemRepository.save(cartItem);
         }
         else {
@@ -64,24 +73,24 @@ public class CartService {
     }
 
     public CartResponse removefromCart(Long cartItemId){
-        User user=getCurrentUser();
+        User user=util.getCurrentUser();
         Cart cart=cartRepository.findByUserId(user.getId())
-                .orElseThrow(()->new RuntimeException("Cart is Not Found"));
+                .orElseThrow(()->new ResourceNotFoundException("Cart is Not Found"));
         CartItem cartItem=cartItemRepository.findById(cartItemId)
-                .orElseThrow(()->new RuntimeException("CartItem Is not Found"));
+                .orElseThrow(()->new ResourceNotFoundException("CartItem Is not Found"));
         if(!(cartItem.getCart().getId().equals(cart.getId()))){
-            throw new RuntimeException("Unauthorised");
+            throw new UnauthorisedException("You cannot remove items from another user's cart");
         }
         cartItemRepository.delete(cartItem);
         return mapToResponse(cartRepository.findById(cart.getId()).get());
     }
-    public CartResponse clearCart(){
-        User user=getCurrentUser();
+    public void clearCart(){
+        User user=util.getCurrentUser();
         Cart cart=cartRepository.findByUserId(user.getId())
-                .orElseThrow(()->new RuntimeException("Cart Not found"));
+                .orElseThrow(()->new ResourceNotFoundException
+                        ("Cart not found"+user.getId()));
         cart.getItems().clear();
         cartRepository.save(cart);
-        return mapToResponse(cart);
     }
 
 
@@ -115,10 +124,5 @@ public class CartService {
                 .totalItems(cartResponseList.size())
                 .build();
     }
-    private User getCurrentUser(){
-        String email= SecurityContextHolder.getContext()
-                .getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("User Not Found"));
-    }
+
 }

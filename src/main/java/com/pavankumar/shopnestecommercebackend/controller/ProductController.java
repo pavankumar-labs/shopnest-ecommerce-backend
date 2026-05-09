@@ -1,12 +1,15 @@
 package com.pavankumar.shopnestecommercebackend.controller;
 
+import com.pavankumar.shopnestecommercebackend.dto.ApiResponse;
 import com.pavankumar.shopnestecommercebackend.dto.PageResponse;
 import com.pavankumar.shopnestecommercebackend.dto.ProductRequest;
 import com.pavankumar.shopnestecommercebackend.dto.ProductResponse;
 import com.pavankumar.shopnestecommercebackend.service.ProductService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,29 +17,44 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Tag(name = "Products", description = "Products management APIs")
 public class ProductController {
     private final ProductService productService;
 
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
-    public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request){
-        return ResponseEntity.status(201).body(productService.createProduct(request));
+    public ResponseEntity<ApiResponse<ProductResponse>> create
+            (@Valid @RequestBody ProductRequest request){
+        ProductResponse response=productService.createProduct(request);
+        return ResponseEntity.status(201).body(ApiResponse
+                .success(response,"created Product successfully"));
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAll(){
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll(){
+        List<ProductResponse> responses=productService.getAllProducts();
+        return ResponseEntity.ok(ApiResponse
+                .success(responses,"All Products fetched"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getById(@PathVariable Long id){
-        return ResponseEntity.ok(productService.getProductById(id));
+    public ResponseEntity<ApiResponse<ProductResponse>> getById
+            (@PathVariable Long id){
+        ProductResponse response=productService.getProductById(id);
+        return ResponseEntity.ok(ApiResponse
+                .success(response,"Product fetched successfully"));
     }
 
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public  ResponseEntity<ProductResponse> update(@PathVariable Long id,@RequestBody @Valid ProductRequest request){
         return ResponseEntity.ok(productService.updateProduct(id,request));
     }
 
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         productService.deleteProduct(id);
@@ -44,13 +62,19 @@ public class ProductController {
     }
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ProductResponse>> getByCategory(@PathVariable Long categoryId){
-        return ResponseEntity.ok(productService.getProductByCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getByCategory
+            (@PathVariable Long categoryId){
+        List<ProductResponse> responses=productService.getProductByCategory(categoryId);
+        return ResponseEntity.ok(ApiResponse
+                .success(responses,"Products of category fetched "));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ProductResponse>> search(@RequestParam String keyword){
-        return ResponseEntity.ok(productService.searchProducts(keyword));
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> search
+            (@RequestParam String keyword){
+        List<ProductResponse> responses=productService.searchProducts(keyword);
+        return ResponseEntity.ok(ApiResponse
+                .success(responses,"products matched search fetched"));
     }
 
     @GetMapping("/search/paginated")
@@ -62,17 +86,21 @@ public class ProductController {
     }
 
     @GetMapping("/paginated")
-    public  ResponseEntity<PageResponse<ProductResponse>> getAllProductsPaginated(
+    public  ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getAllProductsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){
-        return ResponseEntity.ok(productService.getAllProductsPaginated(page,size));
+        PageResponse<ProductResponse> response=
+                productService.getAllProductsPaginated(page,size);
+        return ResponseEntity.ok(ApiResponse
+                .success(response,"fetched products successfully"));
     }
 
     @GetMapping("/category/paginated/{categoryId}")
-    public ResponseEntity<PageResponse<ProductResponse>> paginatedProductsByCategoryId(
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> paginatedProductsByCategoryId(
             @PathVariable  Long categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){
-        return ResponseEntity.ok(productService.paginatedProductsByCategoryId(categoryId,page,size));
+        PageResponse<ProductResponse> response=productService.paginatedProductsByCategoryId(categoryId,page,size);
+        return ResponseEntity.ok(ApiResponse.success(response,"products fetched by category"));
     }
 }

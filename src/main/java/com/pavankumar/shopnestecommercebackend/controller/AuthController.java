@@ -1,14 +1,17 @@
 package com.pavankumar.shopnestecommercebackend.controller;
 
+import com.pavankumar.shopnestecommercebackend.dto.ApiResponse;
 import com.pavankumar.shopnestecommercebackend.dto.AuthResponse;
 import com.pavankumar.shopnestecommercebackend.dto.LoginRequest;
 import com.pavankumar.shopnestecommercebackend.dto.RegisterRequest;
 import com.pavankumar.shopnestecommercebackend.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Authentication", description = "Authentication management APIs")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -17,11 +20,16 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request){
-        return ResponseEntity.ok(userService.register(request));
+    public ResponseEntity<ApiResponse<AuthResponse>> register
+            (@Valid @RequestBody RegisterRequest request){
+        AuthResponse response=userService.register(request);
+        return ResponseEntity.ok(ApiResponse
+                .success(response,"User successfully registered"));
     }
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request){
-        return ResponseEntity.ok(userService.login(request));
+    public ResponseEntity<ApiResponse<AuthResponse>> login
+            (@Valid @RequestBody LoginRequest request){
+        AuthResponse response=userService.login(request);
+        return ResponseEntity.ok(ApiResponse.success(response,"Login successfully"));
     }
 }

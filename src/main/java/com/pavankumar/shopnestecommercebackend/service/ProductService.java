@@ -3,6 +3,7 @@ package com.pavankumar.shopnestecommercebackend.service;
 import com.pavankumar.shopnestecommercebackend.dto.PageResponse;
 import com.pavankumar.shopnestecommercebackend.dto.ProductRequest;
 import com.pavankumar.shopnestecommercebackend.dto.ProductResponse;
+import com.pavankumar.shopnestecommercebackend.exception.ResourceNotFoundException;
 import com.pavankumar.shopnestecommercebackend.model.Category;
 import com.pavankumar.shopnestecommercebackend.model.Product;
 import com.pavankumar.shopnestecommercebackend.repository.CategoryRepository;
@@ -24,7 +25,9 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
 
     public ProductResponse createProduct(ProductRequest request){
-        Category category=categoryRepository.findById(request.getCategoryId()).orElseThrow(()->new RuntimeException("Category not found: " ));
+        Category category=categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(()->new ResourceNotFoundException
+                        ("Category not found: "+request.getCategoryId() ));
         Product product=Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -43,15 +46,19 @@ public class ProductService {
 
     public ProductResponse getProductById(Long id){
         Product product=productRepository
-                .findById(id).orElseThrow(()->new RuntimeException("Product Not Found: "+id));
+                .findById(id).orElseThrow(()->new ResourceNotFoundException
+                        ("Product not found: "+id));
         return mapToResponse(product);
     }
 
     public  ProductResponse updateProduct(Long id,ProductRequest request){
         Product product=productRepository
-                .findById(id).orElseThrow(()->new RuntimeException("Product Not Found: "+id));
+                .findById(id).orElseThrow(()->new ResourceNotFoundException
+                        ("Product not found: "+id));
         Category category=categoryRepository
-                .findById(request.getCategoryId()).orElseThrow(()->new RuntimeException("Category not found: " ));
+                .findById(request.getCategoryId())
+                .orElseThrow(()->new ResourceNotFoundException
+                        ("Category not found: " +request.getCategoryId()));
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
@@ -63,13 +70,15 @@ public class ProductService {
 
     public void deleteProduct(Long id){
         Product product=productRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("Product not Found: " + id));
+                .orElseThrow(()->new ResourceNotFoundException
+                        ("Product not found: " + id));
         productRepository.delete(product);
     }
 
     public List<ProductResponse> getProductByCategory(Long categoryId){
         if(!(categoryRepository.existsById(categoryId))){
-            throw new RuntimeException("Category not found: " + categoryId);
+            throw new ResourceNotFoundException
+                    ("Category not found: " + categoryId);
         }
         return productRepository.findByCategory_Id(categoryId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
@@ -80,9 +89,11 @@ public class ProductService {
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
-    public PageResponse<ProductResponse> searchProductsPaginated(String keyword, int page,int size){
+    public PageResponse<ProductResponse> searchProductsPaginated
+            (String keyword, int page,int size){
         Pageable pageable= PageRequest.of(page,size);
-        Page<Product> productPage=productRepository.findByNameContainingIgnoreCase(keyword,pageable);
+        Page<Product> productPage=productRepository
+                .findByNameContainingIgnoreCase(keyword,pageable);
         return maptoPageResponse(productPage);
     }
 
@@ -92,7 +103,8 @@ public class ProductService {
         return maptoPageResponse(productPage);
     }
 
-    public PageResponse<ProductResponse> paginatedProductsByCategoryId(Long categoryId,int page,int size){
+    public PageResponse<ProductResponse> paginatedProductsByCategoryId
+            (Long categoryId,int page,int size){
         Pageable pageable=PageRequest.of(page,size);
         Page<Product> productPage=productRepository.findByCategory_Id(categoryId,pageable);
         return maptoPageResponse(productPage);

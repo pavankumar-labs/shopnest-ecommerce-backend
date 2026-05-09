@@ -3,6 +3,7 @@ package com.pavankumar.shopnestecommercebackend.service;
 import com.pavankumar.shopnestecommercebackend.dto.AuthResponse;
 import com.pavankumar.shopnestecommercebackend.dto.LoginRequest;
 import com.pavankumar.shopnestecommercebackend.dto.RegisterRequest;
+import com.pavankumar.shopnestecommercebackend.exception.ResourceAlreadyExistsException;
 import com.pavankumar.shopnestecommercebackend.model.Role;
 import com.pavankumar.shopnestecommercebackend.model.User;
 import com.pavankumar.shopnestecommercebackend.repository.UserRepository;
@@ -31,14 +32,14 @@ public class UserService  {
 
     public AuthResponse register(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("user already registered");
+            throw new ResourceAlreadyExistsException
+                    ("Email already registered: "+request.getEmail());
         }
         User user=User.builder()
                 .name(request.getName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role(Role.ROLE_USER)
-                .createdAt(LocalDateTime.now())
                 .build();
         userRepository.save(user);
         return AuthResponse.builder()

@@ -1,0 +1,95 @@
+package com.pavankumar.shopnestecommercebackend.exception;
+
+import com.pavankumar.shopnestecommercebackend.dto.ApiResponse;
+import com.razorpay.RazorpayException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.nio.file.AccessDeniedException;
+import java.util.stream.Collectors;
+
+@RestControllerAdvice
+
+public class GlobalExceptionalHandler {
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest
+            (BadRequestException exception, HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error
+                        (exception.getMessage(),request.getRequestURI()));
+    }
+    @ExceptionHandler(RazorpayException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadGateway
+            (RazorpayException exception, HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.
+                        error(exception.getMessage(), request.getRequestURI()));
+    }
+    @ExceptionHandler(SignatureVerification.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest
+            (SignatureVerification exception, HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error
+                        (exception.getMessage(),request.getRequestURI()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbidden
+            (AccessDeniedException exception, HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(exception.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFound
+            (ResourceNotFoundException exception,HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error
+                        (exception.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict
+            (ResourceAlreadyExistsException exception,HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse
+                        .error(exception.getMessage(), request.getRequestURI()));
+    }
+
+
+    @ExceptionHandler(UnauthorisedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbidden
+            (UnauthorisedException exception,HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error
+                        (exception.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest
+            (MethodArgumentNotValidException exception,HttpServletRequest request){
+        String message=exception.getBindingResult().getFieldErrors()
+                .stream().map(error->error.getField()+":"+error.getDefaultMessage())
+                .collect(Collectors.joining(","));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+
+                .body(ApiResponse.error(message,request.getRequestURI()));
+    }
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInternalServer
+            (RuntimeException exception,HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error
+                        (exception.getMessage(), request.getRequestURI()));
+    }
+
+
+
+
+
+}

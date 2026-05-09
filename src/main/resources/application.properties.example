@@ -1,25 +1,37 @@
-spring.application.name=shopnest-ecommerce-backend
-server.port=8080
 
 # Database Connection
 spring.datasource.url=jdbc:mysql://localhost:3306/shopnest_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-spring.datasource.username=root
-spring.datasource.password=Pavan@001
+
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 
 # JPA Settings
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 # this two configuration are used to display the query in console and another for formating that query
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
 
 # JWT Config
-jwt.secret=shopnest_super_secret_key_2024_do_not_share_this_key_ever
+jwt.secret=your_jwt_secret_key
 jwt.expiration=86400000
 
 # Disable default security password in console
 spring.security.user.name=admin
 spring.security.user.password=admin123
+
+# Email Configuration (use Gmail)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your_email@gmail.com
+spring.mail.password=your_gmail_app_password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+
+springdoc.api-docs.path=/api-docs
+
+# Razorpay Configuration
+razorpay.key.id=your_razorpay_key_id
+razorpay.key.secret=your_razorpay_secret
+razorpay.currency=INR
