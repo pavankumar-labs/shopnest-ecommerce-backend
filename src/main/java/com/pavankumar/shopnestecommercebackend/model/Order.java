@@ -38,8 +38,10 @@ public class Order {
     @Column(name="total_amount",nullable = false,precision = 10,scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name="shipping_address",nullable = false)
-    private String shippingAddress;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="shipping_address", nullable = false)
+    private UserAddress userAddress;
 
     @CreationTimestamp
     @Column(name = "created_at",updatable = false)

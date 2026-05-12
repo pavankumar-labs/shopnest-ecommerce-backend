@@ -1,4 +1,4 @@
-package com.pavankumar.shopnestecommercebackend.security;
+package com.pavankumar.shopnestecommercebackend.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -7,7 +7,9 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 
+@EnableAsync
 @Configuration
 public class SwaggerConfig {
     @Bean

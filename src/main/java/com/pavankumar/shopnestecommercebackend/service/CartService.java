@@ -14,7 +14,6 @@ import com.pavankumar.shopnestecommercebackend.model.User;
 import com.pavankumar.shopnestecommercebackend.repository.CartItemRepository;
 import com.pavankumar.shopnestecommercebackend.repository.CartRepository;
 import com.pavankumar.shopnestecommercebackend.repository.ProductRepository;
-import com.pavankumar.shopnestecommercebackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
@@ -26,7 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CartService {
-    private final UserRepository userRepository;
+
     private final CartRepository cartRepository;
     private  final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
@@ -34,7 +33,7 @@ public class CartService {
 
     public CartResponse getCart(){
         User user=util.getCurrentUser();
-        Cart cart=cartRepository.findByUserId(user.getId())
+        Cart cart=cartRepository.findByUserIdWithItems(user.getId())
                 .orElseGet(()->createCart(user));
         return mapToResponse(cart);
     }
@@ -69,7 +68,7 @@ public class CartService {
                     .build();
             cartItemRepository.save(cartItem);
         }
-       return mapToResponse(cartRepository.findById(cart.getId()).get());
+       return mapToResponse(cartRepository.findByUserIdWithItems(user.getId()).get());
     }
 
     public CartResponse removefromCart(Long cartItemId){
@@ -82,11 +81,11 @@ public class CartService {
             throw new UnauthorisedException("You cannot remove items from another user's cart");
         }
         cartItemRepository.delete(cartItem);
-        return mapToResponse(cartRepository.findById(cart.getId()).get());
+        return mapToResponse(cartRepository.findByUserIdWithItems(user.getId()).get());
     }
     public void clearCart(){
         User user=util.getCurrentUser();
-        Cart cart=cartRepository.findByUserId(user.getId())
+        Cart cart=cartRepository.findByUserIdWithItems(user.getId())
                 .orElseThrow(()->new ResourceNotFoundException
                         ("Cart not found"+user.getId()));
         cart.getItems().clear();

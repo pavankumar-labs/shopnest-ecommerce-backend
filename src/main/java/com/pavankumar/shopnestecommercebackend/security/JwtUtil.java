@@ -1,8 +1,7 @@
 package com.pavankumar.shopnestecommercebackend.security;
 
-import com.pavankumar.shopnestecommercebackend.model.User;
+
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;

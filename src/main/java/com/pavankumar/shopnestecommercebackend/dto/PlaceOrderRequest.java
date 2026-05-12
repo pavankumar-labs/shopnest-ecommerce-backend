@@ -1,6 +1,7 @@
 package com.pavankumar.shopnestecommercebackend.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlaceOrderRequest {
-    @NotBlank(message = "shippingAddress ids required")
-    private String shippingAddress;
+    @NotNull(message = "addressId is required")
+    private Long addressId;
 }

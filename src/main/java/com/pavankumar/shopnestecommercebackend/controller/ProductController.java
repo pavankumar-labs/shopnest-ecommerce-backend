@@ -49,8 +49,9 @@ public class ProductController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
-    public  ResponseEntity<ProductResponse> update(@PathVariable Long id,@RequestBody @Valid ProductRequest request){
-        return ResponseEntity.ok(productService.updateProduct(id,request));
+    public  ResponseEntity<ApiResponse<ProductResponse>> update(@PathVariable Long id,@RequestBody @Valid ProductRequest request){
+        ProductResponse response=productService.updateProduct(id,request);
+        return ResponseEntity.ok(ApiResponse.success(response,"updated Product successfully"));
     }
 
 

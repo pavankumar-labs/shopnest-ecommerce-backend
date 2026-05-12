@@ -1,5 +1,6 @@
 package com.pavankumar.shopnestecommercebackend.service;
 
+import com.pavankumar.shopnestecommercebackend.config.CacheConfig;
 import com.pavankumar.shopnestecommercebackend.dto.PageResponse;
 import com.pavankumar.shopnestecommercebackend.dto.ProductRequest;
 import com.pavankumar.shopnestecommercebackend.dto.ProductResponse;
@@ -9,6 +10,10 @@ import com.pavankumar.shopnestecommercebackend.model.Product;
 import com.pavankumar.shopnestecommercebackend.repository.CategoryRepository;
 import com.pavankumar.shopnestecommercebackend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +29,8 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
+
+    @CacheEvict(value = CacheConfig.PRODUCTS,allEntries = true)
     public ProductResponse createProduct(ProductRequest request){
         Category category=categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(()->new ResourceNotFoundException
@@ -39,18 +46,23 @@ public class ProductService {
         Product savedProduct=productRepository.save(product);
         return mapToResponse(savedProduct); }
 
+    @Cacheable(value =CacheConfig.PRODUCTS,key = "'productList'")
     public List<ProductResponse> getAllProducts(){
-        return productRepository.findAll()
+        return productRepository.findAllWithCategory()
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
-
+    @Cacheable(value = CacheConfig.PRODUCTS,key = "#id")
     public ProductResponse getProductById(Long id){
         Product product=productRepository
-                .findById(id).orElseThrow(()->new ResourceNotFoundException
+                .findByProductId(id).orElseThrow(()->new ResourceNotFoundException
                         ("Product not found: "+id));
         return mapToResponse(product);
     }
 
+    @Caching(
+            put =@CachePut(value = CacheConfig.PRODUCTS, key = "#id"),
+            evict = @CacheEvict(value = CacheConfig.PRODUCTS, allEntries = true)
+    )
     public  ProductResponse updateProduct(Long id,ProductRequest request){
         Product product=productRepository
                 .findById(id).orElseThrow(()->new ResourceNotFoundException
@@ -68,6 +80,8 @@ public class ProductService {
         return mapToResponse(productRepository.save(product));
     }
 
+
+    @CacheEvict(value = CacheConfig.PRODUCTS,allEntries = true)
     public void deleteProduct(Long id){
         Product product=productRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException
@@ -75,38 +89,44 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    @Cacheable(value = CacheConfig.PRODUCTS,key = "'category_'+#categoryId",unless = "#result.isEmpty()")
     public List<ProductResponse> getProductByCategory(Long categoryId){
-        if(!(categoryRepository.existsById(categoryId))){
-            throw new ResourceNotFoundException
-                    ("Category not found: " + categoryId);
-        }
-        return productRepository.findByCategory_Id(categoryId)
+        categoryRepository.findById(categoryId)
+                .orElseThrow(()->new ResourceNotFoundException
+                        ("Category not found: " + categoryId));
+        return productRepository.findByCategoryIdWithCategory(categoryId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Cacheable(value = CacheConfig.PRODUCTS,key = "'search_'+#keyword",unless = "#result.isEmpty()")
     public List<ProductResponse> searchProducts(String keyword){
-        return productRepository.findByNameContainingIgnoreCase(keyword)
+        return productRepository.findByNameContainingIgnoreCaseWithCategory(keyword)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Cacheable(value = CacheConfig
+            .PRODUCTS,key = "'search_page_'+#keyword+'page_'+#page+'size_'+#size")
     public PageResponse<ProductResponse> searchProductsPaginated
             (String keyword, int page,int size){
         Pageable pageable= PageRequest.of(page,size);
         Page<Product> productPage=productRepository
-                .findByNameContainingIgnoreCase(keyword,pageable);
+                .findByNameContainingIgnoreCasePaginated(keyword,pageable);
         return maptoPageResponse(productPage);
     }
 
+    @Cacheable(value =CacheConfig.PRODUCTS,key = "'page_'+#page+'size_'+#size")
     public  PageResponse<ProductResponse> getAllProductsPaginated(int page,int size){
         Pageable pageable=PageRequest.of(page,size);
-        Page<Product> productPage=productRepository.findAll(pageable);
+        Page<Product> productPage=productRepository.findAllWithCategoryPaginated(pageable);
         return maptoPageResponse(productPage);
     }
 
+    @Cacheable(value = CacheConfig
+            .PRODUCTS,key = "'categoryId_'+#categoryId+'page_'+#page+'size_'+#size")
     public PageResponse<ProductResponse> paginatedProductsByCategoryId
             (Long categoryId,int page,int size){
         Pageable pageable=PageRequest.of(page,size);
-        Page<Product> productPage=productRepository.findByCategory_Id(categoryId,pageable);
+        Page<Product> productPage=productRepository.findByCategory_IdPaginated(categoryId,pageable);
         return maptoPageResponse(productPage);
 
     }

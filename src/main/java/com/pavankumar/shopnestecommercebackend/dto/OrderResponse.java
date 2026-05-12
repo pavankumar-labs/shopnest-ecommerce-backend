@@ -21,7 +21,8 @@ public class OrderResponse {
     private Long id;
     private String status;
     private BigDecimal totalAmount;
-    private String shippingAddress;
+    private String address;
+    private String pincode;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }

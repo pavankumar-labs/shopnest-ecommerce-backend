@@ -5,6 +5,7 @@ import com.pavankumar.shopnestecommercebackend.dto.PaymentOrderResponse;
 import com.pavankumar.shopnestecommercebackend.dto.PaymentVerifyRequest;
 import com.pavankumar.shopnestecommercebackend.service.PaymentService;
 import com.razorpay.RazorpayException;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    @Operation(summary = "Create payment order")
     @PostMapping("/create/{id}")
     public ResponseEntity<ApiResponse<PaymentOrderResponse>> create
             (@PathVariable Long id ) throws RazorpayException{
@@ -27,6 +29,7 @@ public class PaymentController {
                 .success(response,"Payment order created"));
     }
 
+    @Operation(summary = "Verify Razorpay payment signature and confirm order")
     @PostMapping("/verify")
     public ResponseEntity<ApiResponse<String>> verify
             (@Valid @RequestBody PaymentVerifyRequest request) throws RazorpayException{
