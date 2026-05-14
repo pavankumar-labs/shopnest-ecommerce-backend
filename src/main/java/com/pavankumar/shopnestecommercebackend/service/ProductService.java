@@ -59,10 +59,7 @@ public class ProductService {
         return mapToResponse(product);
     }
 
-    @Caching(
-            put =@CachePut(value = CacheConfig.PRODUCTS, key = "#id"),
-            evict = @CacheEvict(value = CacheConfig.PRODUCTS, allEntries = true)
-    )
+   @CacheEvict(value = CacheConfig.PRODUCTS, allEntries = true)
     public  ProductResponse updateProduct(Long id,ProductRequest request){
         Product product=productRepository
                 .findById(id).orElseThrow(()->new ResourceNotFoundException

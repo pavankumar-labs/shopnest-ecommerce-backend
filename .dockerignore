@@ -1,0 +1,19 @@
+# Maven build output — largest folder, not needed by Docker
+target/
+
+.git/
+
+# IntelliJ settings — not needed
+.idea/
+*.iml
+
+
+docker-compose.yml
+.dockerignore
+
+# Logs generated locally
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

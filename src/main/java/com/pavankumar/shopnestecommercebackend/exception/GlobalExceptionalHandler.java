@@ -31,9 +31,9 @@ public class GlobalExceptionalHandler {
                 .body(ApiResponse.
                         error(exception.getMessage(), request.getRequestURI()));
     }
-    @ExceptionHandler(SignatureVerification.class)
+    @ExceptionHandler(SignatureVerificationException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest
-            (SignatureVerification exception, HttpServletRequest request){
+            (SignatureVerificationException exception, HttpServletRequest request){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error
                         (exception.getMessage(),request.getRequestURI()));
@@ -58,6 +58,14 @@ public class GlobalExceptionalHandler {
     public ResponseEntity<ApiResponse<Void>> handleConflict
             (ResourceAlreadyExistsException exception,HttpServletRequest request){
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse
+                        .error(exception.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict
+            (InsufficientStockException exception,HttpServletRequest request){
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ApiResponse
                         .error(exception.getMessage(), request.getRequestURI()));
     }

@@ -1,6 +1,7 @@
 package com.pavankumar.shopnestecommercebackend.config;
 
-
+import tools.jackson.databind.ObjectMapper;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -8,9 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
-import tools.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,13 +23,12 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
 
-
         JacksonJsonRedisSerializer<Object> serializer =
                 new JacksonJsonRedisSerializer<>(
-                        new ObjectMapper(),
+                        new ObjectMapper()
+                               ,
                         Object.class
                 );
-
 
         RedisSerializationContext.SerializationPair<Object> serializerPair =
                 RedisSerializationContext
@@ -59,4 +57,3 @@ public class CacheConfig {
                 .build();
     }
 }
-

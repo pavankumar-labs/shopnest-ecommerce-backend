@@ -40,6 +40,9 @@ public class Product {
     @JoinColumn(name = "category_id",nullable = false)
     private Category category;
 
+    @Version
+    private int version;
+
     @CreationTimestamp
     @Column(updatable = false,name = "created_at")
     private LocalDateTime createdAt;

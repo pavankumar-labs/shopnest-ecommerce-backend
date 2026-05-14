@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class AddressRequest {
+
     @NotBlank(message = "Username is required")
     @Size(max = 100, message = "Full name must be at most 100 characters")
    private  String fullName;

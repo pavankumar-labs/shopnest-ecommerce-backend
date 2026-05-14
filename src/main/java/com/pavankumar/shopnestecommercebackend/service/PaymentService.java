@@ -4,11 +4,10 @@ import com.pavankumar.shopnestecommercebackend.util.AuthUtil;
 import com.pavankumar.shopnestecommercebackend.dto.PaymentOrderResponse;
 import com.pavankumar.shopnestecommercebackend.dto.PaymentVerifyRequest;
 import com.pavankumar.shopnestecommercebackend.exception.ResourceNotFoundException;
-import com.pavankumar.shopnestecommercebackend.exception.SignatureVerification;
+import com.pavankumar.shopnestecommercebackend.exception.SignatureVerificationException;
 import com.pavankumar.shopnestecommercebackend.model.*;
 import com.pavankumar.shopnestecommercebackend.repository.OrderRepository;
 import com.pavankumar.shopnestecommercebackend.repository.PaymentRepository;
-import com.pavankumar.shopnestecommercebackend.repository.UserRepository;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Utils;
@@ -23,11 +22,12 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
-    private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final EmailService emailService;
     private final AuthUtil util;
+    private final OrderService orderService;
+
 
     @Value("${razorpay.key.id}")
     private String key;
@@ -39,6 +39,7 @@ public class PaymentService {
     private String currency;
 
 
+    @Transactional
     public PaymentOrderResponse createPaymentOrder(Long orderId ) throws RazorpayException {
         User user=util.getCurrentUser();
         Order order=orderRepository.findByIdAndUserId(orderId, user.getId())
@@ -64,6 +65,7 @@ public class PaymentService {
                 .amount(order.getTotalAmount())
                 .build();
     }
+
     @Transactional
     public  String verifyPayment(PaymentVerifyRequest paymentRequest) throws RazorpayException{
         JSONObject attributes=new JSONObject();
@@ -71,12 +73,17 @@ public class PaymentService {
         attributes.put("razorpay_order_id",paymentRequest.getRazorpayOrderId());
         attributes.put("razorpay_signature",paymentRequest.getSignature());
         boolean isValid= Utils.verifyPaymentSignature(attributes,secretKey);
-        if(!(isValid)){
-            throw new SignatureVerification("Payment Signature verification failed");
-        }
         Payment payment=paymentRepository
-                .findByRazorpayOrderId(paymentRequest.getRazorpayOrderId())
+                .findByRazorpayOrderIdWithLock(paymentRequest.getRazorpayOrderId())
                 .orElseThrow(()->new ResourceNotFoundException("Payment not found"));
+        if(!(isValid)){
+                orderService.handleFailedPayment(payment);
+            throw new SignatureVerificationException("Payment Signature verification failed");
+        }
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            return "Payment already verified";
+        }
 
         payment.setRazorpayPaymentId(paymentRequest.getRazorpayPaymentId());
         payment.setStatus(PaymentStatus.SUCCESS);

@@ -1,5 +1,6 @@
 package com.pavankumar.shopnestecommercebackend.service;
 
+import com.pavankumar.shopnestecommercebackend.exception.InsufficientStockException;
 import com.pavankumar.shopnestecommercebackend.repository.*;
 import com.pavankumar.shopnestecommercebackend.util.AuthUtil;
 import com.pavankumar.shopnestecommercebackend.dto.OrderItemResponse;
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +26,9 @@ public class OrderService {
     private final EmailService emailService;
     private final AuthUtil util;
     private final AddressRepository addressRepository;
+    private final InventoryService inventoryService;
+    private final PaymentRepository paymentRepository;
+   private  final StockService stockService;
 
     @Transactional
     public OrderResponse placeOrder(PlaceOrderRequest request) {
@@ -41,10 +44,7 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItem cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
-            if (product.getStock() < cartItem.getQuantity()) {
-                throw new BadRequestException
-                        ("Stock is Unavailable: " + product.getName());
-            }
+            stockService.deductStock(product, cartItem.getQuantity());
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
                     .quantity(cartItem.getQuantity())
@@ -53,10 +53,9 @@ public class OrderService {
             BigDecimal subTotal = product.getPrice()
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             totalAmount = totalAmount.add(subTotal);
-            product.setStock((product.getStock()) - cartItem.getQuantity());
             orderItems.add(orderItem);
         }
-        UserAddress address=addressRepository.findById(request.getAddressId())
+        UserAddress address=addressRepository.findByIdAndUserId(request.getAddressId(),user.getId())
                 .orElseThrow(()->new ResourceNotFoundException("Address not found"));
         Order order = Order.builder()
                 .user(user)
@@ -98,10 +97,7 @@ public class OrderService {
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new BadRequestException("Only PENDING orders can be cancelled");
         }
-        for (OrderItem orderItem : order.getItems()) {
-            Product product = orderItem.getProduct();
-            product.setStock(product.getStock() + orderItem.getQuantity());
-        }
+        inventoryService.restoreStock(order);
         order.setStatus(OrderStatus.CANCELLED);
         Order savedOrder = orderRepository.save(order);
         emailService.sendOrderCancellation(user.getEmail(), user.getName(), orderId);
@@ -136,4 +132,16 @@ public class OrderService {
                 .createdAt(order.getCreatedAt())
                 .build();
     }
+    @Transactional
+    public void handleFailedPayment(Payment payment) {
+        payment.setStatus(PaymentStatus.FAILED);
+        paymentRepository.save(payment);
+
+        Order order = payment.getOrder();
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+
+        inventoryService.restoreStock(order);
+    }
+
 }

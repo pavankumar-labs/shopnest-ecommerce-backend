@@ -124,7 +124,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
-            
+
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -139,6 +139,19 @@
             <artifactId>bucket4j-core</artifactId>
             <version>8.7.0</version>
         </dependency>
+
+        <!-- Spring Retry -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+            <version>2.0.5</version>
+        </dependency>
+        <!-- Required for Spring Retry to work -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
